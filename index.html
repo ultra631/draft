@@ -83,6 +83,8 @@ body.is-admin .draft-btn.admin-only{display:inline-block}
 .rline .rn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rline .rs{font-family:'Bebas Neue',sans-serif;color:var(--or2);font-size:15px}
 .rline .rx{color:var(--rouge);cursor:pointer;font-size:14px;padding:0 4px}
+.rline.staff{background:rgba(212,175,55,.05);border-radius:6px;padding-left:4px;padding-right:4px}
+.jpos.role{background:rgba(212,175,55,.2);border-color:var(--or);color:var(--or2);font-size:10px;letter-spacing:.08em}
 .eq-vide{color:var(--arg2);font-size:12px;font-style:italic;padding:6px 0}
 .eq-slots{font-size:10.5px;color:var(--arg2);margin-top:6px}
 .eq-slots.ok{color:var(--vert)}
@@ -283,6 +285,25 @@ const EQUIPES=[
  {id:"tor",nom:"Toronto",ea:"46480"},
  {id:"nyr",nom:"NY Rangers",ea:"46553"}
 ];
+/* GM / AGM déjà assignés à chaque équipe (comptent dans la masse, pas repêchables) */
+const STAFF=[
+ {eq:"wsh",n:"Thxmpson x48",role:"GM",s:5},
+ {eq:"wsh",n:"Bxnenfant",role:"AGM",s:7},
+ {eq:"det",n:"Slyr_chucky",role:"GM",s:7},
+ {eq:"det",n:"OhPresTs",role:"AGM",s:5},
+ {eq:"nyr",n:"Tanguay l40l",role:"GM",s:7},
+ {eq:"nyr",n:"FL_ULTRA-",role:"AGM",s:5},
+ {eq:"mtl",n:"Kraax",role:"GM",s:9},
+ {eq:"mtl",n:"McXpicher",role:"AGM",s:5},
+ {eq:"cgy",n:"Cmplxcty",role:"GM",s:9},
+ {eq:"cgy",n:"Swmpyy",role:"AGM",s:5},
+ {eq:"bos",n:"Swayman",role:"GM",s:3},
+ {eq:"bos",n:"Volk4rius_",role:"AGM",s:5},
+ {eq:"buf",n:"L notmad l",role:"GM",s:7},
+ {eq:"buf",n:"l vaklex l",role:"AGM",s:3},
+ {eq:"tor",n:"Bolducx76x",role:"GM",s:5},
+ {eq:"tor",n:"Mxdness",role:"AGM",s:5}
+];
 
 let estAdmin=false, picks=[], filtrePos="", triSal=false, joueurAChoisir=null;
 
@@ -316,7 +337,10 @@ function sauverPicks(){
 function eqParId(id){return EQUIPES.find(e=>e.id===id);}
 function joParNom(n){return JOUEURS.find(j=>j.n===n);}
 function picksEquipe(eid){return picks.filter(p=>p.eq===eid);}
-function masseEquipe(eid){return picksEquipe(eid).reduce((s,p)=>s+(joParNom(p.j)?joParNom(p.j).s:0),0);}
+function staffEquipe(eid){return STAFF.filter(x=>x.eq===eid);}
+function masseStaff(eid){return staffEquipe(eid).reduce((s,x)=>s+x.s,0);}
+function masseEquipe(eid){return masseStaff(eid)+picksEquipe(eid).reduce((s,p)=>s+(joParNom(p.j)?joParNom(p.j).s:0),0);}
+function effectifEquipe(eid){return staffEquipe(eid).length+picksEquipe(eid).length;}
 function nomsPris(){return new Set(picks.map(p=>p.j));}
 function prochainePick(){
  // ordre serpentin selon EQUIPES, autant de rondes qu'il faut
@@ -356,19 +380,21 @@ function rendre(){
 }
 function rendreEquipes(){
  document.getElementById('equipes-grille').innerHTML = EQUIPES.map(e=>{
-  const ros=picksEquipe(e.id), m=masseEquipe(e.id), pct=Math.min(m/PLAFOND*100,100);
+  const ros=picksEquipe(e.id), staff=staffEquipe(e.id), eff=effectifEquipe(e.id), m=masseEquipe(e.id), pct=Math.min(m/PLAFOND*100,100);
   const warn = m>PLAFOND;
-  const slotsTxt = ros.length<MIN_J ? ('Manque '+(MIN_J-ros.length)+' joueur(s) (min '+MIN_J+')')
-                 : ros.length>MAX_J ? ('Trop de joueurs (max '+MAX_J+')')
-                 : ('✓ '+ros.length+' joueurs (min '+MIN_J+', max '+MAX_J+')');
-  const slotsCls = ros.length<MIN_J?'warn':(ros.length>MAX_J?'warn':'ok');
+  const slotsTxt = eff<MIN_J ? ('Manque '+(MIN_J-eff)+' joueur(s) (min '+MIN_J+')')
+                 : eff>MAX_J ? ('Trop de joueurs (max '+MAX_J+')')
+                 : ('✓ '+eff+' joueurs (min '+MIN_J+', max '+MAX_J+')');
+  const slotsCls = eff<MIN_J?'warn':(eff>MAX_J?'warn':'ok');
+  const staffHtml = staff.map(x=>'<div class="rline staff"><span class="rp"><span class="jpos role">'+x.role+'</span></span><span class="rn">'+esc(x.n)+'</span><span class="rs">'+x.s+'M</span></div>').join('');
   return '<div class="eq"><div class="eq-head" onclick="this.parentElement.querySelector(\'.eq-roster\').classList.toggle(\'collapsed\')">'
    +'<span class="enom">'+esc(e.nom)+'</span>'
-   +'<span class="ecount">'+ros.length+' j.</span>'
+   +'<span class="ecount">'+eff+' j.</span>'
    +'<span class="eq-masse"><span class="used">'+m+'</span><span class="cap"> / '+PLAFOND+' M$</span></span></div>'
    +'<div class="eq-jauge"><div class="eq-jauge-fill'+(warn?' warn':'')+'" style="width:'+pct+'%"></div></div>'
    +'<div class="eq-roster">'
-   +(ros.length? ros.map(p=>{const j=joParNom(p.j);return '<div class="rline"><span class="rp">'+(j?chipsPos(j.p):'')+'</span><span class="rn">'+esc(p.j)+'</span><span class="rs">'+(j?j.s:'?')+'M</span>'+(estAdmin?'<span class="rx admin-only" onclick="retirerPick(\''+esc(p.j).replace(/'/g,"\\'")+'\')">✕</span>':'')+'</div>';}).join('') : '<div class="eq-vide">Aucun joueur repêché</div>')
+   +staffHtml
+   +(ros.length? ros.map(p=>{const j=joParNom(p.j);return '<div class="rline"><span class="rp">'+(j?chipsPos(j.p):'')+'</span><span class="rn">'+esc(p.j)+'</span><span class="rs">'+(j?j.s:'?')+'M</span>'+(estAdmin?'<span class="rx admin-only" onclick="retirerPick(\''+esc(p.j).replace(/'/g,"\\'")+'\')">✕</span>':'')+'</div>';}).join('') : '<div class="eq-vide">Aucun joueur repêché encore</div>')
    +'<div class="eq-slots '+slotsCls+'">'+slotsTxt+'</div>'
    +'</div></div>';
  }).join('');
@@ -388,7 +414,7 @@ function ouvrirPick(nom){
  const p=prochainePick();
  document.getElementById('mp-joueur').innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:18px;color:var(--or2)">'+esc(nom)+'</div><div style="font-size:13px;color:var(--arg);margin-top:3px">'+chipsPos(joueurAChoisir.p)+' <span class="jplat '+joueurAChoisir.pl+'">'+joueurAChoisir.pl+'</span> · <b style="color:var(--or2)">'+joueurAChoisir.s+' M$</b></div>';
  const sel=document.getElementById('mp-equipe');
- sel.innerHTML=EQUIPES.map(e=>'<option value="'+e.id+'"'+(e.id===p.equipe.id?' selected':'')+'>'+esc(e.nom)+' — '+(PLAFOND-masseEquipe(e.id))+' M$ dispo · '+picksEquipe(e.id).length+' j.</option>').join('');
+ sel.innerHTML=EQUIPES.map(e=>'<option value="'+e.id+'"'+(e.id===p.equipe.id?' selected':'')+'>'+esc(e.nom)+' — '+(PLAFOND-masseEquipe(e.id))+' M$ dispo · '+effectifEquipe(e.id)+' j.</option>').join('');
  document.getElementById('mp-err').style.display='none';
  document.getElementById('modale-pick').classList.add('open');
 }
@@ -397,7 +423,7 @@ function confirmerPick(){
  const eid=document.getElementById('mp-equipe').value, err=document.getElementById('mp-err');
  const restant=PLAFOND-masseEquipe(eid);
  if(nomsPris().has(joueurAChoisir.n)){err.textContent='Ce joueur est déjà repêché!';err.style.display='block';return;}
- if(picksEquipe(eid).length>=MAX_J){err.textContent='Cette équipe a atteint le maximum de '+MAX_J+' joueurs.';err.style.display='block';return;}
+ if(effectifEquipe(eid)>=MAX_J){err.textContent='Cette équipe a atteint le maximum de '+MAX_J+' joueurs.';err.style.display='block';return;}
  if(!joueurAChoisir.s){ if(!confirm('⚠️ Ce joueur n\'a pas encore de salaire assigné (affiché comme 0 M$ pour l\'instant).\n\nLe confirmer quand même ? Pense à corriger son salaire ensuite.')) return; }
  else if(joueurAChoisir.s>restant){err.textContent='⚠️ Dépasse le plafond! Il reste '+restant+' M$ mais le joueur coûte '+joueurAChoisir.s+' M$.';err.style.display='block';return;}
  picks.push({j:joueurAChoisir.n, eq:eid, t:Date.now()});
