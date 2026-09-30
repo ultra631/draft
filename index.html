@@ -109,6 +109,20 @@ body.is-admin .draft-btn.admin-only{display:inline-block}
 .err{color:var(--rouge);font-size:13px;margin-bottom:10px;display:none}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--or);color:#0A0A0C;font-weight:600;padding:12px 22px;border-radius:12px;z-index:80;opacity:0;transition:opacity .3s;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 .toast.show{opacity:1}
+.tableau-picks{background:var(--carte);border:1px solid var(--bord);border-radius:12px;overflow:hidden;margin-bottom:40px}
+.tp-table{width:100%;border-collapse:collapse}
+.tp-table th{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.16em;color:var(--noir);background:var(--or);padding:9px 12px;text-align:left}
+.tp-table td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.05);font-size:13.5px;vertical-align:middle}
+.tp-table tr:last-child td{border-bottom:none}
+.tp-table tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+.tp-no{font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--or2);width:54px}
+.tp-ronde{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:.1em;color:var(--arg2);width:70px}
+.tp-nom{font-weight:600}
+.tp-eq{font-family:'Cinzel',serif;font-weight:700;color:var(--or2);font-size:13px}
+.tp-sal{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--or2);text-align:right;white-space:nowrap}
+.tp-sep td{background:rgba(212,175,55,.08)!important;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.2em;color:var(--or);padding:6px 12px;text-transform:uppercase}
+.tp-vide{padding:22px;text-align:center;color:var(--arg2);font-style:italic;font-size:13px}
+@media(max-width:700px){.tp-table th:nth-child(4),.tp-table td:nth-child(4),.tp-table th:nth-child(5),.tp-table td:nth-child(5){display:none}}
 footer{text-align:center;padding:24px 0 40px;color:var(--arg2);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
 </style>
 </head>
@@ -154,10 +168,12 @@ footer{text-align:center;padding:24px 0 40px;color:var(--arg2);font-size:11px;le
       <div class="col-titre">Équipes <span class="compte">Plafond : 34 M$</span></div>
       <div class="equipes-grille" id="equipes-grille"></div>
 
-      <div class="col-titre" style="margin-top:22px">Derniers choix</div>
-      <div class="histo" id="histo"></div>
     </div>
   </div>
+
+  <!-- ORDRE COMPLET DU REPÊCHAGE -->
+  <div class="col-titre" style="margin-top:6px">Ordre du repêchage <span class="compte" id="compte-picks"></span></div>
+  <div class="tableau-picks" id="tableau-picks"></div>
 
   <footer>Dynasty Hockey League · Repêchage Saison 1</footer>
 </div>
@@ -399,11 +415,24 @@ function rendreEquipes(){
  }).join('');
 }
 function rendreHisto(){
- const der=[...picks].reverse().slice(0,12);
- document.getElementById('histo').innerHTML = der.length? der.map((p,i)=>{
+ const cont=document.getElementById('tableau-picks'); if(!cont) return;
+ document.getElementById('compte-picks').textContent='('+picks.length+' choix)';
+ if(!picks.length){ cont.innerHTML='<div class="tp-vide">Le repêchage n\'a pas commencé.</div>'; return; }
+ const n=EQUIPES.length;
+ let html='<table class="tp-table"><thead><tr><th>#</th><th>Ronde</th><th>Joueur</th><th>Positions</th><th>Plateforme</th><th>Équipe</th><th style="text-align:right">Salaire</th></tr></thead><tbody>';
+ let rondeCourante=0;
+ picks.forEach((p,i)=>{
+  const ronde=Math.floor(i/n)+1;
+  if(ronde!==rondeCourante){ rondeCourante=ronde; html+='<tr class="tp-sep"><td colspan="7">Ronde '+ronde+'</td></tr>'; }
   const j=joParNom(p.j), e=eqParId(p.eq);
-  return '<div class="hitem"><span class="hno">#'+(picks.length-i)+'</span><span class="hj">'+esc(p.j)+' <span style="color:var(--arg2)">('+(j?j.s:'?')+'M)</span></span><span class="he">'+(e?esc(e.nom):'?')+'</span></div>';
- }).join('') : '<div class="eq-vide">Le repêchage n\'a pas commencé.</div>';
+  html+='<tr><td class="tp-no">#'+(i+1)+'</td><td class="tp-ronde">R'+ronde+' · '+((i%n)+1)+'</td>'
+   +'<td class="tp-nom">'+esc(p.j)+'</td>'
+   +'<td>'+(j?chipsPos(j.p):'—')+'</td>'
+   +'<td>'+(j&&j.pl&&j.pl!=='?'?'<span class="jplat '+j.pl+'">'+j.pl+'</span>':'—')+'</td>'
+   +'<td class="tp-eq">'+(e?esc(e.nom):'?')+'</td>'
+   +'<td class="tp-sal">'+(j&&j.s?j.s+' M$':'?')+'</td></tr>';
+ });
+ cont.innerHTML=html+'</tbody></table>';
 }
 
 /* ===== ACTIONS ADMIN ===== */
