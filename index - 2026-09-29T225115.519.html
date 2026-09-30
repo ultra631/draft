@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Repêchage en direct — DYNASTY Hockey League</title>
+<meta name="theme-color" content="#0A0A0C">
+<link rel="icon" type="image/png" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--noir:#0A0A0C;--noir2:#111114;--carte:#141418;--bord:#26262E;--or:#D4AF37;--or2:#E8C964;--txt:#F2EEE3;--arg:#B8B4A8;--arg2:#7A776E;--rouge:#E05555;--vert:#5FD08A;--ps:#3B82F6;--xb:#22C55E}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--noir);color:var(--txt);font-family:'Inter',sans-serif;line-height:1.5;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 400px at 50% -8%,rgba(212,175,55,.08),transparent 60%)}
+.wrap{max-width:1400px;margin:0 auto;padding:0 16px;position:relative;z-index:1}
+header{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--bord);flex-wrap:wrap}
+header img{width:46px;height:46px;object-fit:contain}
+.brand{font-family:'Cinzel',serif;font-weight:800;font-size:20px;letter-spacing:.12em;background:linear-gradient(135deg,var(--or2),var(--or),#9C7F24);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+.brand-sub{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--arg2);margin-top:3px}
+.live-badge{display:inline-flex;align-items:center;gap:7px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.18em;color:var(--rouge);border:1px solid var(--rouge);border-radius:99px;padding:4px 14px}
+.live-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--rouge);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{opacity:1}50%{opacity:.3}100%{opacity:1}}
+.btn-admin{margin-left:auto;background:transparent;border:1px solid var(--bord);color:var(--arg2);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:16px}
+.btn-admin.on{border-color:var(--or);color:var(--or)}
+
+.pick-actuel{background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(212,175,55,.03));border:1px solid var(--or);border-radius:16px;padding:16px 20px;margin:18px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pick-actuel .no{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--or);line-height:1}
+.pick-actuel .info{flex:1;min-width:180px}
+.pick-actuel .ronde{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--arg2)}
+.pick-actuel .equipe{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--txt)}
+.pick-actuel .masse{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em}
+.pick-actuel .masse b{color:var(--or2);font-size:22px}
+
+.layout{display:grid;grid-template-columns:1fr 1.1fr;gap:16px;margin-bottom:40px}
+@media(max-width:920px){.layout{grid-template-columns:1fr}}
+.col-titre{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.18em;color:var(--or);text-transform:uppercase;margin:6px 0 12px;display:flex;align-items:center;gap:10px}
+.col-titre .compte{font-size:13px;color:var(--arg2);letter-spacing:.05em}
+
+/* Filtres */
+.filtres{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.filtres input{flex:1;min-width:120px;background:var(--noir);border:1px solid var(--bord);border-radius:9px;padding:9px 12px;color:var(--txt);font-size:14px;outline:none}
+.filtres input:focus{border-color:var(--or)}
+.fbtn{background:var(--noir);border:1px solid var(--bord);color:var(--arg);border-radius:8px;padding:8px 11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.08em;cursor:pointer}
+.fbtn.on{background:var(--or);border-color:var(--or);color:#0A0A0C}
+
+/* Liste joueurs dispo */
+.dispo-liste{max-height:70vh;overflow-y:auto;padding-right:4px}
+.jcard{display:flex;align-items:center;gap:10px;background:var(--carte);border:1px solid var(--bord);border-radius:11px;padding:10px 12px;margin-bottom:7px}
+.jcard .jn{flex:1;min-width:0}
+.jcard .jnom{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jcard .jmeta{font-size:11.5px;color:var(--arg2);margin-top:1px}
+.jpos{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:.06em;padding:1px 6px;border-radius:4px;border:1px solid var(--bord);color:var(--arg);margin-right:3px}
+.jpos.G{background:rgba(212,175,55,.18);border-color:var(--or);color:var(--or2)}
+.jplat{font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px}
+.jplat.PS5{background:rgba(59,130,246,.18);color:#93C5FD}
+.jplat.Xbox{background:rgba(34,197,94,.18);color:#86EFAC}
+.jsal{font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--or2);width:52px;text-align:right;flex:none}
+.jcard .draft-btn{flex:none;background:var(--or);border:none;color:#0A0A0C;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.06em;border-radius:8px;padding:7px 12px;cursor:pointer}
+.jcard .draft-btn:hover{background:var(--or2)}
+.admin-only{display:none}
+body.is-admin .admin-only{display:inline-block}
+body.is-admin .draft-btn.admin-only{display:inline-block}
+
+/* Équipes */
+.equipes-grille{display:grid;grid-template-columns:1fr;gap:10px}
+.eq{background:var(--carte);border:1px solid var(--bord);border-radius:12px;overflow:hidden}
+.eq-head{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;border-left:3px solid var(--or)}
+.eq-head .enom{font-family:'Cinzel',serif;font-weight:700;font-size:15px;flex:1}
+.eq-head .ecount{font-size:11px;color:var(--arg2);font-family:'Bebas Neue',sans-serif;letter-spacing:.06em}
+.eq-masse{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.04em}
+.eq-masse .used{color:var(--or2)}
+.eq-masse .cap{color:var(--arg2)}
+.eq-jauge{height:5px;background:var(--noir);border-radius:3px;overflow:hidden;margin:0 14px}
+.eq-jauge-fill{height:100%;background:linear-gradient(90deg,#9C7F24,var(--or));transition:width .3s}
+.eq-jauge-fill.warn{background:linear-gradient(90deg,#c77,#E05555)}
+.eq-roster{padding:6px 14px 12px}
+.eq-roster.collapsed{display:none}
+.rline{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
+.rline:last-child{border-bottom:none}
+.rline .rp{font-family:'Bebas Neue',sans-serif;font-size:11px;color:var(--arg2);width:52px;flex:none}
+.rline .rn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rline .rs{font-family:'Bebas Neue',sans-serif;color:var(--or2);font-size:15px}
+.rline .rx{color:var(--rouge);cursor:pointer;font-size:14px;padding:0 4px}
+.eq-vide{color:var(--arg2);font-size:12px;font-style:italic;padding:6px 0}
+.eq-slots{font-size:10.5px;color:var(--arg2);margin-top:6px}
+.eq-slots.ok{color:var(--vert)}
+.eq-slots.warn{color:var(--rouge)}
+
+/* Historique */
+.histo{margin-top:6px}
+.hitem{display:flex;align-items:center;gap:10px;font-size:12.5px;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.hitem .hno{font-family:'Bebas Neue',sans-serif;color:var(--arg2);width:38px}
+.hitem .hj{flex:1}
+.hitem .he{color:var(--or2);font-family:'Cinzel',serif;font-size:12px}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:50;align-items:center;justify-content:center;padding:18px}
+.modal.open{display:flex}
+.modal-box{background:var(--carte);border:1px solid var(--or);border-radius:16px;padding:24px;max-width:400px;width:100%}
+.modal-box h3{font-family:'Cinzel',serif;font-size:17px;margin-bottom:14px}
+.modal-box input,.modal-box select{width:100%;background:var(--noir);border:1px solid var(--bord);border-radius:10px;padding:12px;color:var(--txt);font-size:15px;outline:none;margin-bottom:10px}
+.modal-box input:focus{border-color:var(--or)}
+.mrow{display:flex;gap:8px;flex-wrap:wrap}
+.mbtn{background:var(--or);border:none;color:#0A0A0C;border-radius:9px;padding:11px 16px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.06em;cursor:pointer}
+.mbtn.ghost{background:transparent;border:1px solid var(--bord);color:var(--arg)}
+.err{color:var(--rouge);font-size:13px;margin-bottom:10px;display:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--or);color:#0A0A0C;font-weight:600;padding:12px 22px;border-radius:12px;z-index:80;opacity:0;transition:opacity .3s;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.toast.show{opacity:1}
+footer{text-align:center;padding:24px 0 40px;color:var(--arg2);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="logo.png" alt="" onerror="this.style.display='none'">
+    <div><div class="brand">DYNASTY</div><div class="brand-sub">Repêchage Saison 1</div></div>
+    <span class="live-badge"><span class="dot"></span>EN DIRECT</span>
+    <button class="btn-admin" id="btn-admin" onclick="toggleAdmin()" title="Admin">👑</button>
+  </header>
+
+  <div class="pick-actuel" id="pick-actuel">
+    <div class="no" id="pa-no">—</div>
+    <div class="info">
+      <div class="ronde" id="pa-ronde">En attente</div>
+      <div class="equipe" id="pa-equipe">—</div>
+    </div>
+    <div class="masse">Masse dispo : <b id="pa-masse">—</b></div>
+    <button class="fbtn admin-only" onclick="pickPrecedent()" style="margin-left:8px">↶ Annuler dernier</button>
+  </div>
+
+  <div class="layout">
+    <!-- COLONNE GAUCHE : joueurs disponibles -->
+    <div>
+      <div class="col-titre">Joueurs disponibles <span class="compte" id="compte-dispo"></span></div>
+      <div class="filtres">
+        <input type="text" id="f-recherche" placeholder="🔍 Chercher un joueur..." oninput="rendre()">
+      </div>
+      <div class="filtres">
+        <button class="fbtn on" data-pos="" onclick="setPos(this)">Tous</button>
+        <button class="fbtn" data-pos="C" onclick="setPos(this)">Centre</button>
+        <button class="fbtn" data-pos="A" onclick="setPos(this)">Ailier</button>
+        <button class="fbtn" data-pos="D" onclick="setPos(this)">Défense</button>
+        <button class="fbtn" data-pos="G" onclick="setPos(this)">Gardien</button>
+        <button class="fbtn" data-tri="sal" onclick="setTri(this)" title="Trier par salaire">💰 $</button>
+      </div>
+      <div class="dispo-liste" id="dispo-liste"></div>
+    </div>
+
+    <!-- COLONNE DROITE : équipes + historique -->
+    <div>
+      <div class="col-titre">Équipes <span class="compte">Plafond : 34 M$</span></div>
+      <div class="equipes-grille" id="equipes-grille"></div>
+
+      <div class="col-titre" style="margin-top:22px">Derniers choix</div>
+      <div class="histo" id="histo"></div>
+    </div>
+  </div>
+
+  <footer>Dynasty Hockey League · Repêchage Saison 1</footer>
+</div>
+
+<!-- MODALE : confirmer un choix -->
+<div class="modal" id="modale-pick">
+  <div class="modal-box">
+    <h3 id="mp-titre">Repêcher un joueur</h3>
+    <div id="mp-joueur" style="margin-bottom:14px"></div>
+    <label style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--arg2);display:block;margin-bottom:6px">Équipe qui repêche</label>
+    <select id="mp-equipe"></select>
+    <div class="err" id="mp-err"></div>
+    <div class="mrow">
+      <button class="mbtn" onclick="confirmerPick()">✓ Confirmer le choix</button>
+      <button class="mbtn ghost" onclick="fermer('modale-pick')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE : login -->
+<div class="modal" id="modale-login">
+  <div class="modal-box">
+    <h3>🔒 Accès admin</h3>
+    <input type="password" id="mdp" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')connexion()">
+    <div class="err" id="login-err">Mot de passe incorrect.</div>
+    <div class="mrow">
+      <button class="mbtn" onclick="connexion()">Entrer</button>
+      <button class="mbtn ghost" onclick="fermer('modale-login')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===== CONFIG ===== */
+const MDP="dynasty2026", PLAFOND=34, MIN_J=8, MAX_J=12;
+const DOC=["repechageDHL","live"];
+firebase.initializeApp({apiKey:"AIzaSyB2FMin3aA93x9OnEGfC0-UP3vkGFxee9c",authDomain:"dynasty-chel.firebaseapp.com",projectId:"dynasty-chel",storageBucket:"dynasty-chel.firebasestorage.app",messagingSenderId:"550460590216",appId:"1:550460590216:web:1bb1626fb2e202364af73d"});
+const db=firebase.firestore();
+
+const JOUEURS=[
+{n:'Alexi_Hockey',p:'A',pl:'PS5',d:'Alexi Morin',s:1},
+{n:'ASSELINOO',p:'D',pl:'Xbox',d:'ASSELINOO',s:7},
+{n:'Azgod_02',p:'A',pl:'PS5',d:'nO_m3rcy26_89439',s:5},
+{n:'B3GNØCH3',p:'A',pl:'Xbox',d:'FAMILY FIRST#320',s:1},
+{n:'BigShot 899687',p:'C, A',pl:'Xbox',d:'Bigshot89',s:3},
+{n:'Bxnenfant',p:'C, A, D, G',pl:'Xbox',d:'Bxnenfant',s:7},
+{n:'Carlcoreqc',p:'C, A, D',pl:'PS5',d:'Carlcoreqc',s:1},
+{n:'Clapped by9179',p:'A, G',pl:'Xbox',d:'Č̣ṚªẒ̌y',s:3},
+{n:'Clutch98Qc',p:'D',pl:'Xbox',d:'Le_Babs_LeFou66',s:3},
+{n:'Cmplxcty',p:'C, A, D',pl:'Xbox',d:'Cmplxcty',s:9},
+{n:'ComaTikss70',p:'G',pl:'Xbox',d:'ComaTikss70',s:1},
+{n:'comcocmbrokam',p:'C',pl:'Xbox',d:'kameron00864',s:1},
+{n:'Creepy',p:'C, D',pl:'Xbox',d:'',s:7},
+{n:'Dangles x 91',p:'G',pl:'Xbox',d:'Dangles x 91',s:3},
+{n:'Darkjoe78',p:'A',pl:'Xbox',d:'Darkjoe78',s:3},
+{n:'Demidxv x 93',p:'A',pl:'PS5',d:'Demidxv x 93',s:3},
+{n:'Dodo x L31L',p:'C, A',pl:'Xbox',d:'Dodo x L31L',s:1},
+{n:'Dxnut__',p:'C, D, G',pl:'PS5',d:'Dxnut__',s:1},
+{n:'Easy-_-MoneyGang',p:'A',pl:'PS5',d:'',s:1},
+{n:'Elcrosso_13',p:'A',pl:'PS5',d:'Elcrosso_13',s:1},
+{n:'eric74robert',p:'A, D',pl:'Xbox',d:'Eric',s:1},
+{n:'FireStar QC',p:'G',pl:'Xbox',d:'FireStar QC',s:3},
+{n:'Fkco',p:'A',pl:'Xbox',d:'',s:9},
+{n:'FL_ULTRA-',p:'G',pl:'PS5',d:'Ultra',s:5},
+{n:'Hardy i27i',p:'D, G',pl:'Xbox',d:'Hardy i27i',s:5},
+{n:'HomicideQC',p:'C, D, G',pl:'Xbox',d:'Homicid30pof',s:3},
+{n:'I AAAAAA I',p:'A, D, G',pl:'Xbox',d:'Tom',s:3},
+{n:'I-GXGNON-I',p:'A, G',pl:'PS5',d:'Matt_qc',s:3},
+{n:'IIcasseauII33',p:'G',pl:'PS5',d:'IIcasseauII33',s:3},
+{n:'iR0sty',p:'C',pl:'Xbox',d:'iR0sty',s:9},
+{n:'Israsaucier',p:'A',pl:'Xbox',d:'Israsaucier',s:7},
+{n:'Jaimelemou-',p:'C, A',pl:'PS5',d:'Jaimelemou',s:9},
+{n:'JoPascaleQC3',p:'C, A',pl:'Xbox',d:'JoPascaleXF',s:5},
+{n:'Kaizen x 96',p:'A',pl:'Xbox',d:'Kaizen x 96',s:7},
+{n:'Kraxx',p:'C, A',pl:'Xbox',d:'',s:9},
+{n:'KxshhNHL',p:'C',pl:'Xbox',d:'Kushh NHL',s:7},
+{n:'L notmad l',p:'C, A, D, G',pl:'Xbox',d:'L NoTMaD l',s:7},
+{n:'l vaklex l',p:'G',pl:'Xbox',d:'l vaklex l',s:3},
+{n:'LA CALÈCHE I',p:'C, A, D, G',pl:'Xbox',d:'I kylzee',s:7},
+{n:'La-_-Coquina',p:'C, A',pl:'PS5',d:'Miss-_-Estrie',s:3},
+{n:'LCHQ Titou05',p:'G',pl:'Xbox',d:'Titou05yt',s:3},
+{n:'Le quebecois767',p:'A',pl:'Xbox',d:'Le quebecois767',s:3},
+{n:'Le shérif 4',p:'C, A',pl:'PS5',d:'LeShérif4',s:5},
+{n:'Lucifer7961',p:'A',pl:'Xbox',d:'Lucifer7961',s:3},
+{n:'LXCLERC-97',p:'G',pl:'PS5',d:'LXCLERC-97',s:3},
+{n:'Lxnctot',p:'A, G',pl:'Xbox',d:'Lxnctot',s:5},
+{n:'Malekx94',p:'?',pl:'Xbox',d:'Malekx94',s:9},
+{n:'Mamanetore',p:'D, G',pl:'Xbox',d:'Mamanetore',s:3},
+{n:'McKenna x72x',p:'A',pl:'Xbox',d:'Mais c$r$e$a$m',s:5},
+{n:'McXpicher',p:'A, D, G',pl:'Xbox',d:'',s:5},
+{n:'Mxxch1x',p:'A',pl:'PS5',d:'Mxxch',s:1},
+{n:'N0rmy I96I',p:'A, D',pl:'Xbox',d:'N0rmy I96I',s:5},
+{n:'NolanBoud10',p:'C, A',pl:'PS5',d:'Nolan',s:3},
+{n:'OhPresTs',p:'A',pl:'PS5',d:'OhPresTs',s:5},
+{n:'Orgenote7940427',p:'C, G',pl:'Xbox',d:'Orgenote7940427',s:3},
+{n:'Pat-alias-poulin',p:'A, D, G',pl:'PS5',d:'Patoubr7',s:3},
+{n:'Pellty I18I',p:'C, A, G',pl:'Xbox',d:'CrazyPelt x 18',s:3},
+{n:'Qc famous777',p:'A',pl:'Xbox',d:'Qc famous777',s:5},
+{n:'Qc SpitFire89',p:'C, A, D',pl:'Xbox',d:'Qc SpitFire89',s:7},
+{n:'Slyr_chucky',p:'D',pl:'PS5',d:'Slyr_chucky',s:7},
+{n:'SpaceLtm',p:'C',pl:'Xbox',d:'SpaceLtm',s:3},
+{n:'SundqvistI70I',p:'A',pl:'PS5',d:'SundqvistI70I',s:3},
+{n:'Swayman',p:'G',pl:'Xbox',d:'',s:3},
+{n:'Swmpyy',p:'A',pl:'Xbox',d:'Xileg1997',s:5},
+{n:'Tanguay l40l',p:'C, A, D',pl:'Xbox',d:'Tanguay l40l (RayZ Thunder)',s:7},
+{n:'The_Chad_is_gr8',p:'C, A, D, G',pl:'PS5',d:'The_Chad_is_gr8',s:3},
+{n:'thebeastjes',p:'C, A',pl:'Xbox',d:'Jess_guns',s:3},
+{n:'Thewall12322',p:'D',pl:'PS5',d:'Thewall12322',s:1},
+{n:'Thxmpson x48',p:'C, A, G',pl:'Xbox',d:'Thxmpson x48',s:5},
+{n:'Ti-Max_Le-Thug',p:'A',pl:'PS5',d:'maxbourgelas',s:1},
+{n:'Tr-xAssassiNx-Qc',p:'C, A',pl:'PS5',d:'Tr819qckiller9091',s:3},
+{n:'UNFAZED_QC',p:'A, D',pl:'PS5',d:'',s:5},
+{n:'Volk4rius_',p:'G',pl:'PS5',d:'Volk4rius_',s:3},
+{n:'vuftr',p:'C, A, D, G',pl:'Xbox',d:'vuftr',s:5},
+{n:'Woodzz I56I',p:'A',pl:'Xbox',d:'WoodzzI56I',s:9},
+{n:'Wunnar',p:'A, G',pl:'Xbox',d:'',s:5},
+{n:'Xirox_88',p:'C, A, D',pl:'PS5',d:'Xirox_88',s:3},
+{n:'xLapss',p:'A, D',pl:'Xbox',d:'Lapssxx',s:5},
+{n:'XX_Fowler_32xx',p:'G',pl:'PS5',d:'Xavier rivard',s:3},
+{n:'XxCrosbyQcxX',p:'C, A, G',pl:'PS5',d:'xxclodaimxx',s:3},
+{n:'XxfroadenxX',p:'C, A, D, G',pl:'Xbox',d:'Froaden',s:5},
+{n:'XxHutson48xX',p:'C, A, D',pl:'Xbox',d:'XxHutson48xX',s:3},
+{n:'XxSlim x 11',p:'C, A',pl:'Xbox',d:'Xx$lįm x 11',s:3},
+{n:'XxXArS3NiKXxX',p:'C, A, D, G',pl:'Xbox',d:'Ars3nik14',s:9},
+{n:'yeetmasterkeith',p:'D, G',pl:'PS5',d:'FidjiWater',s:1},
+{n:'Yolo9099#2215',p:'C, G',pl:'Xbox',d:'Orgenote',s:1},
+{n:'Zkxviiperz',p:'G',pl:'Xbox',d:'',s:1}
+];
+const EQUIPES=[
+ {id:"bos",nom:"Boston",ea:"42383"},
+ {id:"tor",nom:"Toronto",ea:"46480"},
+ {id:"det",nom:"Detroit",ea:"46510"},
+ {id:"nyr",nom:"NY Rangers",ea:"46553"},
+ {id:"wsh",nom:"Washington",ea:"46759"},
+ {id:"cgy",nom:"Calgary",ea:"47008"},
+ {id:"mtl",nom:"Montreal",ea:"1629"},
+ {id:"buf",nom:"Buffalo",ea:"8542"}
+];
+
+let estAdmin=false, picks=[], filtrePos="", triSal=false, joueurAChoisir=null;
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function fermer(id){document.getElementById(id).classList.remove('open');}
+function chipsPos(p){return p.split(',').map(x=>x.trim()).filter(Boolean).map(x=>'<span class="jpos '+x+'">'+x+'</span>').join('');}
+
+/* ===== ADMIN ===== */
+function toggleAdmin(){
+ if(estAdmin){estAdmin=false;sessionStorage.removeItem('rp_admin');maj();return;}
+ document.getElementById('mdp').value='';document.getElementById('login-err').style.display='none';
+ document.getElementById('modale-login').classList.add('open');
+ setTimeout(()=>document.getElementById('mdp').focus(),80);
+}
+function connexion(){
+ if(document.getElementById('mdp').value===MDP){estAdmin=true;sessionStorage.setItem('rp_admin','1');fermer('modale-login');maj();}
+ else document.getElementById('login-err').style.display='block';
+}
+
+/* ===== FIREBASE SYNC ===== */
+db.collection(DOC[0]).doc(DOC[1]).onSnapshot(d=>{
+ picks = (d.exists && d.data().picks) ? d.data().picks : [];
+ maj();
+});
+function sauverPicks(){
+ return db.collection(DOC[0]).doc(DOC[1]).set({picks:picks, maj:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+}
+
+/* ===== CALCULS ===== */
+function eqParId(id){return EQUIPES.find(e=>e.id===id);}
+function joParNom(n){return JOUEURS.find(j=>j.n===n);}
+function picksEquipe(eid){return picks.filter(p=>p.eq===eid);}
+function masseEquipe(eid){return picksEquipe(eid).reduce((s,p)=>s+(joParNom(p.j)?joParNom(p.j).s:0),0);}
+function nomsPris(){return new Set(picks.map(p=>p.j));}
+function prochainePick(){
+ // ordre serpentin selon EQUIPES, autant de rondes qu'il faut
+ const n=EQUIPES.length, tour=Math.floor(picks.length/n), pos=picks.length%n;
+ const ordre = tour%2===0 ? EQUIPES : [...EQUIPES].reverse();
+ return {ronde:tour+1, noGlobal:picks.length+1, equipe:ordre[pos]};
+}
+
+/* ===== RENDU ===== */
+function maj(){
+ document.body.classList.toggle('is-admin',estAdmin);
+ document.getElementById('btn-admin').classList.toggle('on',estAdmin);
+ rendre(); rendreEquipes(); rendreHisto(); rendrePickActuel();
+}
+function rendrePickActuel(){
+ const p=prochainePick();
+ document.getElementById('pa-no').textContent='#'+p.noGlobal;
+ document.getElementById('pa-ronde').textContent='Ronde '+p.ronde+' · Choix '+p.noGlobal;
+ document.getElementById('pa-equipe').textContent=p.equipe.nom;
+ document.getElementById('pa-masse').textContent=(PLAFOND-masseEquipe(p.equipe.id))+' M$';
+}
+function setPos(b){document.querySelectorAll('[data-pos]').forEach(x=>x.classList.remove('on'));b.classList.add('on');filtrePos=b.dataset.pos;rendre();}
+function setTri(b){triSal=!triSal;b.classList.toggle('on',triSal);rendre();}
+function rendre(){
+ const pris=nomsPris(), rech=(document.getElementById('f-recherche').value||'').toLowerCase();
+ let dispo=JOUEURS.filter(j=>!pris.has(j.n));
+ if(filtrePos) dispo=dispo.filter(j=>j.p.split(',').map(x=>x.trim()).includes(filtrePos));
+ if(rech) dispo=dispo.filter(j=>j.n.toLowerCase().includes(rech)||(j.d||'').toLowerCase().includes(rech));
+ dispo.sort((a,b)=> triSal ? b.s-a.s : a.n.toLowerCase().localeCompare(b.n.toLowerCase()));
+ document.getElementById('compte-dispo').textContent='('+dispo.length+' dispo)';
+ document.getElementById('dispo-liste').innerHTML = dispo.map(j=>
+  '<div class="jcard"><div class="jn"><div class="jnom">'+esc(j.n)+'</div>'
+  +'<div class="jmeta">'+chipsPos(j.p)+' <span class="jplat '+j.pl+'">'+j.pl+'</span>'+(j.d?' · '+esc(j.d):'')+'</div></div>'
+  +'<div class="jsal">'+j.s+' M$</div>'
+  +'<button class="draft-btn admin-only" onclick="ouvrirPick(\''+esc(j.n).replace(/'/g,"\\'")+'\')">Repêcher</button></div>'
+ ).join('') || '<div class="eq-vide">Aucun joueur trouvé.</div>';
+}
+function rendreEquipes(){
+ document.getElementById('equipes-grille').innerHTML = EQUIPES.map(e=>{
+  const ros=picksEquipe(e.id), m=masseEquipe(e.id), pct=Math.min(m/PLAFOND*100,100);
+  const warn = m>PLAFOND;
+  const slotsTxt = ros.length<MIN_J ? ('Manque '+(MIN_J-ros.length)+' joueur(s) (min '+MIN_J+')')
+                 : ros.length>MAX_J ? ('Trop de joueurs (max '+MAX_J+')')
+                 : ('✓ '+ros.length+' joueurs (min '+MIN_J+', max '+MAX_J+')');
+  const slotsCls = ros.length<MIN_J?'warn':(ros.length>MAX_J?'warn':'ok');
+  return '<div class="eq"><div class="eq-head" onclick="this.parentElement.querySelector(\'.eq-roster\').classList.toggle(\'collapsed\')">'
+   +'<span class="enom">'+esc(e.nom)+'</span>'
+   +'<span class="ecount">'+ros.length+' j.</span>'
+   +'<span class="eq-masse"><span class="used">'+m+'</span><span class="cap"> / '+PLAFOND+' M$</span></span></div>'
+   +'<div class="eq-jauge"><div class="eq-jauge-fill'+(warn?' warn':'')+'" style="width:'+pct+'%"></div></div>'
+   +'<div class="eq-roster">'
+   +(ros.length? ros.map(p=>{const j=joParNom(p.j);return '<div class="rline"><span class="rp">'+(j?chipsPos(j.p):'')+'</span><span class="rn">'+esc(p.j)+'</span><span class="rs">'+(j?j.s:'?')+'M</span>'+(estAdmin?'<span class="rx admin-only" onclick="retirerPick(\''+esc(p.j).replace(/'/g,"\\'")+'\')">✕</span>':'')+'</div>';}).join('') : '<div class="eq-vide">Aucun joueur repêché</div>')
+   +'<div class="eq-slots '+slotsCls+'">'+slotsTxt+'</div>'
+   +'</div></div>';
+ }).join('');
+}
+function rendreHisto(){
+ const der=[...picks].reverse().slice(0,12);
+ document.getElementById('histo').innerHTML = der.length? der.map((p,i)=>{
+  const j=joParNom(p.j), e=eqParId(p.eq);
+  return '<div class="hitem"><span class="hno">#'+(picks.length-i)+'</span><span class="hj">'+esc(p.j)+' <span style="color:var(--arg2)">('+(j?j.s:'?')+'M)</span></span><span class="he">'+(e?esc(e.nom):'?')+'</span></div>';
+ }).join('') : '<div class="eq-vide">Le repêchage n\'a pas commencé.</div>';
+}
+
+/* ===== ACTIONS ADMIN ===== */
+function ouvrirPick(nom){
+ if(!estAdmin) return;
+ joueurAChoisir=joParNom(nom); if(!joueurAChoisir) return;
+ const p=prochainePick();
+ document.getElementById('mp-joueur').innerHTML='<div style="font-family:\'Cinzel\',serif;font-size:18px;color:var(--or2)">'+esc(nom)+'</div><div style="font-size:13px;color:var(--arg);margin-top:3px">'+chipsPos(joueurAChoisir.p)+' <span class="jplat '+joueurAChoisir.pl+'">'+joueurAChoisir.pl+'</span> · <b style="color:var(--or2)">'+joueurAChoisir.s+' M$</b></div>';
+ const sel=document.getElementById('mp-equipe');
+ sel.innerHTML=EQUIPES.map(e=>'<option value="'+e.id+'"'+(e.id===p.equipe.id?' selected':'')+'>'+esc(e.nom)+' — '+(PLAFOND-masseEquipe(e.id))+' M$ dispo · '+picksEquipe(e.id).length+' j.</option>').join('');
+ document.getElementById('mp-err').style.display='none';
+ document.getElementById('modale-pick').classList.add('open');
+}
+function confirmerPick(){
+ if(!estAdmin||!joueurAChoisir) return;
+ const eid=document.getElementById('mp-equipe').value, err=document.getElementById('mp-err');
+ const restant=PLAFOND-masseEquipe(eid);
+ if(nomsPris().has(joueurAChoisir.n)){err.textContent='Ce joueur est déjà repêché!';err.style.display='block';return;}
+ if(picksEquipe(eid).length>=MAX_J){err.textContent='Cette équipe a atteint le maximum de '+MAX_J+' joueurs.';err.style.display='block';return;}
+ if(joueurAChoisir.s>restant){err.textContent='⚠️ Dépasse le plafond! Il reste '+restant+' M$ mais le joueur coûte '+joueurAChoisir.s+' M$.';err.style.display='block';return;}
+ picks.push({j:joueurAChoisir.n, eq:eid, t:Date.now()});
+ sauverPicks().then(()=>{toast(esc(joueurAChoisir.n)+' → '+esc(eqParId(eid).nom));fermer('modale-pick');}).catch(e=>{err.textContent=e.message;err.style.display='block';picks.pop();});
+}
+function retirerPick(nom){
+ if(!estAdmin) return;
+ if(!confirm('Retirer '+nom+' du repêchage ?')) return;
+ const i=picks.map(p=>p.j).lastIndexOf(nom);
+ if(i>=0){picks.splice(i,1);sauverPicks().then(()=>toast(nom+' retiré'));}
+}
+function pickPrecedent(){
+ if(!estAdmin||!picks.length) return;
+ const last=picks[picks.length-1];
+ if(!confirm('Annuler le dernier choix ('+last.j+') ?')) return;
+ picks.pop();sauverPicks().then(()=>toast('Dernier choix annulé'));
+}
+
+if(sessionStorage.getItem('rp_admin')==='1') estAdmin=true;
+</script>
+</body></html>
