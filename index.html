@@ -56,6 +56,7 @@ header img{width:46px;height:46px;object-fit:contain}
 .jplat.PS5{background:rgba(59,130,246,.18);color:#93C5FD}
 .jplat.Xbox{background:rgba(34,197,94,.18);color:#86EFAC}
 .jsal{font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--or2);width:52px;text-align:right;flex:none}
+.jsal.na{color:var(--arg2);font-size:15px}
 .jcard .draft-btn{flex:none;background:var(--or);border:none;color:#0A0A0C;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.06em;border-radius:8px;padding:7px 12px;cursor:pointer}
 .jcard .draft-btn:hover{background:var(--or2)}
 .admin-only{display:none}
@@ -269,7 +270,8 @@ const JOUEURS=[
 {n:'XxSlim x 11',p:'C, A',pl:'Xbox',d:'Xx$lįm x 11',s:3},
 {n:'yeetmasterkeith',p:'D, G',pl:'PS5',d:'FidjiWater',s:1},
 {n:'Yolo9099#2215',p:'C, G',pl:'Xbox',d:'Orgenote',s:1},
-{n:'Zkxviiperz',p:'G',pl:'Xbox',d:'',s:1}
+{n:'Zkxviiperz',p:'G',pl:'Xbox',d:'',s:1},
+{n:'Loobzz',p:'?',pl:'?',d:'',s:0}
 ];
 const EQUIPES=[
  {id:"cgy",nom:"Calgary",ea:"47008"},
@@ -348,7 +350,7 @@ function rendre(){
  document.getElementById('dispo-liste').innerHTML = dispo.map(j=>
   '<div class="jcard"><div class="jn"><div class="jnom">'+esc(j.n)+'</div>'
   +'<div class="jmeta">'+chipsPos(j.p)+' <span class="jplat '+j.pl+'">'+j.pl+'</span>'+(j.d?' · '+esc(j.d):'')+'</div></div>'
-  +'<div class="jsal">'+j.s+' M$</div>'
+  +'<div class="jsal'+(j.s?'':' na')+'">'+(j.s?j.s+' M$':'?')+'</div>'
   +'<button class="draft-btn admin-only" onclick="ouvrirPick(\''+esc(j.n).replace(/'/g,"\\'")+'\')">Repêcher</button></div>'
  ).join('') || '<div class="eq-vide">Aucun joueur trouvé.</div>';
 }
@@ -396,7 +398,8 @@ function confirmerPick(){
  const restant=PLAFOND-masseEquipe(eid);
  if(nomsPris().has(joueurAChoisir.n)){err.textContent='Ce joueur est déjà repêché!';err.style.display='block';return;}
  if(picksEquipe(eid).length>=MAX_J){err.textContent='Cette équipe a atteint le maximum de '+MAX_J+' joueurs.';err.style.display='block';return;}
- if(joueurAChoisir.s>restant){err.textContent='⚠️ Dépasse le plafond! Il reste '+restant+' M$ mais le joueur coûte '+joueurAChoisir.s+' M$.';err.style.display='block';return;}
+ if(!joueurAChoisir.s){ if(!confirm('⚠️ Ce joueur n\'a pas encore de salaire assigné (affiché comme 0 M$ pour l\'instant).\n\nLe confirmer quand même ? Pense à corriger son salaire ensuite.')) return; }
+ else if(joueurAChoisir.s>restant){err.textContent='⚠️ Dépasse le plafond! Il reste '+restant+' M$ mais le joueur coûte '+joueurAChoisir.s+' M$.';err.style.display='block';return;}
  picks.push({j:joueurAChoisir.n, eq:eid, t:Date.now()});
  sauverPicks().then(()=>{toast(esc(joueurAChoisir.n)+' → '+esc(eqParId(eid).nom));fermer('modale-pick');}).catch(e=>{err.textContent=e.message;err.style.display='block';picks.pop();});
 }
